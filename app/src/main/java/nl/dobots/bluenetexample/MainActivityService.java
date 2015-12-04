@@ -52,7 +52,7 @@ public class MainActivityService extends Activity implements IntervalScanListene
 	private static final String TAG = MainActivityService.class.getCanonicalName();
 
 	// scan for 1 second every 3 seconds
-	public static final int LOW_SCAN_INTERVAL = 1000; // 1 second scanning
+	public static final int LOW_SCAN_INTERVAL = 10000; // 1 second scanning
 	public static final int LOW_SCAN_PAUSE = 2000; // 2 seconds pause
 
 	private BleScanService _service;
@@ -66,6 +66,9 @@ public class MainActivityService extends Activity implements IntervalScanListene
 
 	private BleDeviceList _bleDeviceList;
 	private String _address = "";
+
+	private static final int GUI_UPDATE_INTERVAL = 500;
+	private long _lastUpdate;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -229,7 +232,10 @@ public class MainActivityService extends Activity implements IntervalScanListene
 
 		// but in this example we are only interested in the list of devices, which can be easily
 		// obtained from the library, without the need of keeping up a list ourselves
-		updateDeviceList();
+		if (System.currentTimeMillis() > _lastUpdate + GUI_UPDATE_INTERVAL) {
+			_lastUpdate = System.currentTimeMillis();
+			updateDeviceList();
+		}
 	}
 
 	@Override

@@ -49,6 +49,9 @@ public class MainActivity extends Activity {
 	private BleDeviceList _bleDeviceList;
 	private String _address;
 
+	private static final int GUI_UPDATE_INTERVAL = 500;
+	private long _lastUpdate;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -80,7 +83,7 @@ public class MainActivity extends Activity {
 		super.onDestroy();
 		// finish has to be called on the library to release the objects if the library
 		// is not used anymore
-		_ble.finish();
+		_ble.destroy();
 	}
 
 	private void initUI() {
@@ -169,20 +172,24 @@ public class MainActivity extends Activity {
 				// but for this example we are only interested in the list of scanned devices, so
 				// we ignore the parameter and get the updated device list, sorted by rssi from the
 				// library
-				_bleDeviceList = _ble.getDeviceMap().getRssiSortedList();
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						// the closest device is the first device in the list (because we asked for the
-						// rssi sorted list)
-						_txtClosest.setText(getString(R.string.main_closest_device, _bleDeviceList.get(0).getName()));
+				if (System.currentTimeMillis() > _lastUpdate + GUI_UPDATE_INTERVAL) {
+					Log.i(TAG, "update");
+					_bleDeviceList = _ble.getDeviceMap().getRssiSortedList();
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							// the closest device is the first device in the list (because we asked for the
+							// rssi sorted list)
+							_txtClosest.setText(getString(R.string.main_closest_device, _bleDeviceList.get(0).getName()));
 
-						// update the list view
-						DeviceListAdapter adapter = ((DeviceListAdapter) _lvScanList.getAdapter());
-						adapter.updateList(_bleDeviceList);
-						adapter.notifyDataSetChanged();
-					}
-				});
+							// update the list view
+							DeviceListAdapter adapter = ((DeviceListAdapter) _lvScanList.getAdapter());
+							adapter.updateList(_bleDeviceList);
+							adapter.notifyDataSetChanged();
+						}
+					});
+					_lastUpdate = System.currentTimeMillis();
+				}
 			}
 
 			@Override

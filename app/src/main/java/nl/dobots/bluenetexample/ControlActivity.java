@@ -214,7 +214,7 @@ public class ControlActivity extends AppCompatActivity {
 		super.onDestroy();
 		// finish has to be called on the library to release the objects if the library
 		// is not used anymore
-		_ble.finish();
+		_ble.destroy();
 	}
 
 	private void initUI() {
