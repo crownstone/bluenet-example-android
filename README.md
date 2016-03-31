@@ -25,7 +25,7 @@ To install the project follow these steps:
 
 2. Clone the library into the project location
 
-        cd path/to/project/location
+        cd android-bluenet-example
         git clone https://github.com/dobots/bluenet-lib-android.git bluenet
 
     Make sure the folder of the library will be called bluenet
