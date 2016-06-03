@@ -158,6 +158,7 @@ public class ControlActivity extends AppCompatActivity {
 			public void onError(int error) {
 				// an error occurred during connect/discover
 				Log.e(TAG, "failed to connect/discover: " + error);
+				finish();
 			}
 		});
 
@@ -214,6 +215,19 @@ public class ControlActivity extends AppCompatActivity {
 		super.onDestroy();
 		// finish has to be called on the library to release the objects if the library
 		// is not used anymore
+		if (_ble.isConnected(null)) {
+			_ble.disconnectAndClose(false, new IStatusCallback() {
+				@Override
+				public void onSuccess() {
+
+				}
+
+				@Override
+				public void onError(int error) {
+
+				}
+			});
+		}
 		_ble.destroy();
 	}
 
