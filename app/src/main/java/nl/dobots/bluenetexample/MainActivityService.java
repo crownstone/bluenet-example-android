@@ -1,10 +1,13 @@
 package nl.dobots.bluenetexample;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -16,6 +19,7 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
 import nl.dobots.bluenet.ble.extended.BleDeviceFilter;
 import nl.dobots.bluenet.ble.extended.structs.BleDevice;
 import nl.dobots.bluenet.ble.extended.structs.BleDeviceList;
@@ -69,6 +73,7 @@ public class MainActivityService extends Activity implements IntervalScanListene
 
 	private static final int GUI_UPDATE_INTERVAL = 500;
 	private long _lastUpdate;
+	private BleDeviceFilter _selectedItem;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -122,7 +127,7 @@ public class MainActivityService extends Activity implements IntervalScanListene
 	// scan interval or a scan pause
 	private boolean isScanning() {
 		if (_bound) {
-			return _service.isScanning();
+			return _service.isRunning();
 		}
 		return false;
 	}
@@ -137,11 +142,11 @@ public class MainActivityService extends Activity implements IntervalScanListene
 				// using the scan filter, we can tell the library to return only specific device
 				// types. we are currently distinguish between Crownstones, DoBeacons, iBeacons,
 				// and FridgeBeacons
-				BleDeviceFilter selectedItem = (BleDeviceFilter) _spFilter.getSelectedItem();
+				_selectedItem = (BleDeviceFilter) _spFilter.getSelectedItem();
 
 				if (!isScanning()) {
 					// start a scan with the given filter
-					startScan(selectedItem);
+					startScan(_selectedItem);
 				} else {
 					stopScan();
 				}
@@ -192,6 +197,7 @@ public class MainActivityService extends Activity implements IntervalScanListene
 		if (_bound) {
 			_btnScan.setText(getString(R.string.main_stop_scan));
 			// start scanning for devices, only return devices defined by the filter
+			_service.clearDeviceMap();
 			_service.startIntervalScan(filter);
 		}
 	}
@@ -271,7 +277,49 @@ public class MainActivityService extends Activity implements IntervalScanListene
 				onBleDisabled();
 				break;
 			}
+			case BLE_PERMISSIONS_MISSING: {
+				_service.requestPermissions(this);
+			}
 		}
 	}
 
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+		if (requestCode == 123) {
+			if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				startScan(_selectedItem);
+			} else {
+				Log.e(TAG, "Can't write fingerprints without access to storage!");
+			}
+		} else if (!_service.getBleExt().handlePermissionResult(requestCode, permissions, grantResults,
+				new IStatusCallback() {
+
+					@Override
+					public void onError(int error) {
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								AlertDialog.Builder builder = new AlertDialog.Builder(MainActivityService.this);
+								builder.setTitle("Fatal Error")
+										.setMessage("Cannot scan for devices without permissions. Please " +
+												"grant permissions or uninstall the app again!")
+										.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+											@Override
+											public void onClick(DialogInterface dialog, int which) {
+												MainActivityService.this.finish();
+											}
+										});
+								builder.create().show();
+							}
+						});
+					}
+
+					@Override
+					public void onSuccess() {
+					}
+				})) {
+			super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		}
+	}
 }
