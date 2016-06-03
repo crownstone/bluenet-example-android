@@ -25,7 +25,7 @@ To install the project follow these steps:
 
 2. Clone the library into the project location
 
-        cd path/to/project/location
+        cd android-bluenet-example
         git clone https://github.com/dobots/bluenet-lib-android.git bluenet
 
     Make sure the folder of the library will be called bluenet
@@ -33,6 +33,7 @@ To install the project follow these steps:
 3. Import the project in Android Studio
 
         File > New > Import Project ...
+Choose the android-bluenet-example dir
 
 4. The project shows by default the example where we scan through the library directly. If you want to see the example with the BleScanService instead, go to the AndroidManifest.xml and
 
