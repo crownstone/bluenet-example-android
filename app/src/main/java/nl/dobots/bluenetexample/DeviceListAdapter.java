@@ -9,8 +9,6 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-
 import nl.dobots.bluenet.ble.extended.structs.BleDevice;
 import nl.dobots.bluenet.ble.extended.structs.BleDeviceList;
 
@@ -20,7 +18,7 @@ import nl.dobots.bluenet.ble.extended.structs.BleDeviceList;
  * major, proximity UUID, and estimated distance). The devices are color coded to show
  * what type of device it is:
  * 		* Green: Crownstone
- * 		* Yellow: DoBeacon
+ * 		* Yellow: Guidestone
  * 		* Blue: iBeacon
  * 		* Black: any other BLE device
  *
@@ -119,8 +117,8 @@ public class DeviceListAdapter extends BaseAdapter {
 				viewHolder.devMinor.setText("Minor: " + String.valueOf(device.getMinor()));
 				viewHolder.devDistance.setText("Distance: " + String.valueOf(device.getDistance()));
 
-				// a doBeacon is also an iBeacon
-				if (device.isDoBeacon()) {
+				// a guidestone is also an iBeacon
+				if (device.isGuidestone()) {
 					convertView.setBackgroundColor(0x66FFFF00);
 				} else {
 					convertView.setBackgroundColor(0x660000FF);

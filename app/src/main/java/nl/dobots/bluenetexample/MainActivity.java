@@ -95,7 +95,7 @@ public class MainActivity extends Activity {
 			public void onClick(View view) {
 
 				// using the scan filter, we can tell the library to return only specific device
-				// types. we are currently distinguish between Crownstones, DoBeacons, iBeacons,
+				// types. we are currently distinguish between Crownstones, Guidestones, iBeacons,
 				// and FridgeBeacons
 				BleDeviceFilter selectedItem = (BleDeviceFilter) _spFilter.getSelectedItem();
 				_ble.setScanFilter(selectedItem);

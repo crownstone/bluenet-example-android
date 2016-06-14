@@ -87,43 +87,54 @@ public class ControlActivity extends AppCompatActivity {
 				// the functions on the device. in this case, we want to know what the current
 				// PWM state is
 
-				// so first we check if the PWM characteristic is available on this device
-				if (_ble.hasCharacteristic(BluenetConfig.CHAR_PWM_UUID, null)) {
-					// then we read the PWM value from the device
-					_ble.readPwm(new IIntegerCallback() {
-						@Override
-						public void onSuccess(int result) {
-							// if reading was successful, we get the value in the onSuccess as
-							// the parameter
+				// first we try and read the PWM value from the device. this call will make sure
+				// that the PWM or State characteristic is available, otherwise an error is created
+				_ble.readPwm(new IIntegerCallback() {
+					@Override
+					public void onSuccess(int result) {
+						// if reading was successful, we get the value in the onSuccess as
+						// the parameter
 
-							// now we can update the image of the light bulb to on (if PWM value is
-							// greater than 0) or off if it is 0
-							updateLightBulb(result > 0);
+						// now we can update the image of the light bulb to on (if PWM value is
+						// greater than 0) or off if it is 0
+						updateLightBulb(result > 0);
 
-							// at the end we disconnect and close the device again. you could also
-							// stay connected if you want. but it's preferable to only connect,
-							// execute and disconnect, so that the device can continue advertising
-							// again.
-							_ble.disconnectAndClose(false, new IStatusCallback() {
+						// at the end we disconnect and close the device again. you could also
+						// stay connected if you want. but it's preferable to only connect,
+						// execute and disconnect, so that the device can continue advertising
+						// again.
+						_ble.disconnectAndClose(false, new IStatusCallback() {
+							@Override
+							public void onSuccess() {
+								// at this point we successfully disconnected and closed
+								// the device again
+								dlg.dismiss();
+							}
+
+							@Override
+							public void onError(int error) {
+								// an error occurred while disconnecting
+								dlg.dismiss();
+							}
+						});
+					}
+
+					@Override
+					public void onError(int error) {
+						// an error occurred while trying to read the PWM state
+						Log.e(TAG, "Failed to get Pwm: " + error);
+
+						if (error == BleErrors.ERROR_CHARACTERISTIC_NOT_FOUND) {
+
+							// return an error and exit if the PWM characteristic is not available
+							runOnUiThread(new Runnable() {
 								@Override
-								public void onSuccess() {
-									// at this point we successfully disconnected and closed
-									// the device again
-									dlg.dismiss();
-								}
-
-								@Override
-								public void onError(int error) {
-									// an error occurred while disconnecting
-									dlg.dismiss();
+								public void run() {
+									Toast.makeText(ControlActivity.this, "No PWM Characteristic found for this device!", Toast.LENGTH_LONG).show();
 								}
 							});
-						}
-
-						@Override
-						public void onError(int error) {
-							// an error occurred while trying to read the PWM state
-							Log.e(TAG, "Failed to get Pwm: " + error);
+							finish();
+						} else {
 
 							// disconnect and close the device again
 							_ble.disconnectAndClose(false, new IStatusCallback() {
@@ -141,17 +152,8 @@ public class ControlActivity extends AppCompatActivity {
 								}
 							});
 						}
-					});
-				} else {
-					// return an error and exit if the PWM characteristic is not available
-					runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							Toast.makeText(ControlActivity.this, "No PWM Characteristic found for this device!", Toast.LENGTH_LONG).show();
-						}
-					});
-					finish();
-				}
+					}
+				});
 			}
 
 			@Override
