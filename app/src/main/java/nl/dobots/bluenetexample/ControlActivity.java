@@ -73,6 +73,9 @@ public class ControlActivity extends AppCompatActivity {
 		final ProgressDialog dlg = ProgressDialog.show(this, "Connecting", "Please wait...", true);
 
 		// first we have to connect to the device and discover the available characteristics.
+//		EncryptionKeys keys = new EncryptionKeys("adminKeyForCrown", "memberKeyForHome", "guestKeyForGirls");
+//		_ble.getBleBase().setEncryptionKeys(keys);
+//		_ble.getBleBase().enableEncryption(true);
 		_ble.connectAndDiscover(_address, new IDiscoveryCallback() {
 			@Override
 			public void onDiscovery(String serviceUuid, String characteristicUuid) {
