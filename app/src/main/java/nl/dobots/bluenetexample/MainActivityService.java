@@ -215,6 +215,9 @@ public class MainActivityService extends Activity implements IntervalScanListene
 		// get the list of devices from the service
 
 		_bleDeviceList = _service.getDeviceMap().getRssiSortedList();
+		if (_bleDeviceList.isEmpty()) {
+			return;
+		}
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {

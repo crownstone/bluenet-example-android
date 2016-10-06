@@ -15,6 +15,7 @@ import android.widget.Toast;
 import nl.dobots.bluenet.ble.base.callbacks.IDiscoveryCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IIntegerCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
+import nl.dobots.bluenet.ble.base.structs.EncryptionKeys;
 import nl.dobots.bluenet.ble.cfg.BleErrors;
 import nl.dobots.bluenet.ble.cfg.BleTypes;
 import nl.dobots.bluenet.ble.cfg.BluenetConfig;
@@ -133,6 +134,7 @@ public class ControlActivity extends AppCompatActivity {
 									Toast.makeText(ControlActivity.this, "No PWM Characteristic found for this device!", Toast.LENGTH_LONG).show();
 								}
 							});
+							dlg.dismiss();
 							finish();
 						} else {
 
@@ -160,6 +162,7 @@ public class ControlActivity extends AppCompatActivity {
 			public void onError(int error) {
 				// an error occurred during connect/discover
 				Log.e(TAG, "failed to connect/discover: " + error);
+				dlg.dismiss();
 				finish();
 			}
 		});
