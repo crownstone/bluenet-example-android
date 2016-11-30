@@ -4,21 +4,17 @@ import android.app.ProgressDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import nl.dobots.bluenet.ble.base.callbacks.IBooleanCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IDiscoveryCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IIntegerCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
 import nl.dobots.bluenet.ble.base.structs.EncryptionKeys;
 import nl.dobots.bluenet.ble.cfg.BleErrors;
-import nl.dobots.bluenet.ble.cfg.BleTypes;
-import nl.dobots.bluenet.ble.cfg.BluenetConfig;
 import nl.dobots.bluenet.ble.extended.BleExt;
 
 /**
@@ -73,9 +69,11 @@ public class ControlActivity extends AppCompatActivity {
 		final ProgressDialog dlg = ProgressDialog.show(this, "Connecting", "Please wait...", true);
 
 		// first we have to connect to the device and discover the available characteristics.
-//		EncryptionKeys keys = new EncryptionKeys("adminKeyForCrown", "memberKeyForHome", "guestKeyForGirls");
-//		_ble.getBleBase().setEncryptionKeys(keys);
-//		_ble.getBleBase().enableEncryption(true);
+		if (Config.ENCRYPTION_ENABLED) {
+			EncryptionKeys keys = new EncryptionKeys(Config.ADMIN_KEY, Config.MEMBER_KEY, Config.GUEST_KEY);
+			_ble.getBleBase().setEncryptionKeys(keys);
+			_ble.getBleBase().enableEncryption(true);
+		}
 		_ble.connectAndDiscover(_address, new IDiscoveryCallback() {
 			@Override
 			public void onDiscovery(String serviceUuid, String characteristicUuid) {
@@ -93,15 +91,15 @@ public class ControlActivity extends AppCompatActivity {
 
 				// first we try and read the PWM value from the device. this call will make sure
 				// that the PWM or State characteristic is available, otherwise an error is created
-				_ble.readPwm(new IIntegerCallback() {
+				_ble.readRelay(new IBooleanCallback() {
 					@Override
-					public void onSuccess(int result) {
+					public void onSuccess(boolean result) {
 						// if reading was successful, we get the value in the onSuccess as
 						// the parameter
 
 						// now we can update the image of the light bulb to on (if PWM value is
 						// greater than 0) or off if it is 0
-						updateLightBulb(result > 0);
+						updateLightBulb(result);
 
 						// at the end we disconnect and close the device again. you could also
 						// stay connected if you want. but it's preferable to only connect,
@@ -126,7 +124,7 @@ public class ControlActivity extends AppCompatActivity {
 					@Override
 					public void onError(int error) {
 						// an error occurred while trying to read the PWM state
-						Log.e(TAG, "Failed to get Pwm: " + error);
+						Log.e(TAG, "Failed to get relay status: " + error);
 
 						if (error == BleErrors.ERROR_CHARACTERISTIC_NOT_FOUND) {
 
@@ -134,7 +132,7 @@ public class ControlActivity extends AppCompatActivity {
 							runOnUiThread(new Runnable() {
 								@Override
 								public void run() {
-									Toast.makeText(ControlActivity.this, "No PWM Characteristic found for this device!", Toast.LENGTH_LONG).show();
+									Toast.makeText(ControlActivity.this, "No relay characteristic found for this device!", Toast.LENGTH_LONG).show();
 								}
 							});
 							dlg.dismiss();
@@ -246,7 +244,7 @@ public class ControlActivity extends AppCompatActivity {
 		_lightBulb.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				togglePWM();
+				togglePower();
 			}
 		});
 
@@ -271,7 +269,7 @@ public class ControlActivity extends AppCompatActivity {
 		// switch the device off. this function will check first if the device is connected
 		// (and connect if it is not), then it switches the device off, and disconnects again
 		// afterwards (once the disconnect timeout expires)
-		_ble.powerOff(_address, new IStatusCallback() {
+		_ble.relayOff(_address, new IStatusCallback() {
 			@Override
 			public void onSuccess() {
 				Log.i(TAG, "power off success");
@@ -290,7 +288,7 @@ public class ControlActivity extends AppCompatActivity {
 		// switch the device on. this function will check first if the device is connected
 		// (and connect if it is not), then it switches the device on, and disconnects again
 		// afterwards (once the disconnect timeout expires)
-		_ble.powerOn(_address, new IStatusCallback() {
+		_ble.relayOn(_address, new IStatusCallback() {
 			@Override
 			public void onSuccess() {
 				Log.i(TAG, "power on success");
@@ -305,12 +303,12 @@ public class ControlActivity extends AppCompatActivity {
 		});
 	}
 
-	private void togglePWM() {
+	private void togglePower() {
 		// toggle the device switch, without needing to know the current state. this function will
 		// check first if the device is connected (and connect if it is not), then it reads the
 		// current PWM state, and depending on the state, decides if it needs to switch it on or
 		// off. in the end it disconnects again (once the disconnect timeout expires)
-		_ble.togglePower(_address, new IStatusCallback() {
+		_ble.toggleRelay(_address, new IStatusCallback() {
 			@Override
 			public void onSuccess() {
 				Log.i(TAG, "toggle success");

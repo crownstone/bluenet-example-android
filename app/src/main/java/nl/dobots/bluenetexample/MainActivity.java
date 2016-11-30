@@ -13,6 +13,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
+import nl.dobots.bluenet.ble.base.structs.EncryptionKeys;
 import nl.dobots.bluenet.ble.extended.BleDeviceFilter;
 import nl.dobots.bluenet.ble.extended.BleExt;
 import nl.dobots.bluenet.ble.extended.callbacks.IBleDeviceCallback;
@@ -75,6 +76,11 @@ public class MainActivity extends Activity {
 				onBleDisabled();
 			}
 		});
+		if (Config.ENCRYPTION_ENABLED) {
+			EncryptionKeys keys = new EncryptionKeys(Config.ADMIN_KEY, Config.MEMBER_KEY, Config.GUEST_KEY);
+			_ble.getBleBase().setEncryptionKeys(keys);
+			_ble.getBleBase().enableEncryption(true);
+		}
 
 	}
 

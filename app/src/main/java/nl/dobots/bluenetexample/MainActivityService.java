@@ -20,6 +20,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
+import nl.dobots.bluenet.ble.base.structs.EncryptionKeys;
 import nl.dobots.bluenet.ble.extended.BleDeviceFilter;
 import nl.dobots.bluenet.ble.extended.structs.BleDevice;
 import nl.dobots.bluenet.ble.extended.structs.BleDeviceList;
@@ -56,7 +57,7 @@ public class MainActivityService extends Activity implements IntervalScanListene
 	private static final String TAG = MainActivityService.class.getCanonicalName();
 
 	// scan for 1 second every 3 seconds
-	public static final int LOW_SCAN_INTERVAL = 10000; // 1 second scanning
+	public static final int LOW_SCAN_INTERVAL = 10000; // 10 seconds scanning
 	public static final int LOW_SCAN_PAUSE = 2000; // 2 seconds pause
 
 	private BleScanService _service;
@@ -84,6 +85,15 @@ public class MainActivityService extends Activity implements IntervalScanListene
 		// create and bind to the BleScanService
 		Intent intent = new Intent(this, BleScanService.class);
 		bindService(intent, _connection, Context.BIND_AUTO_CREATE);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (_bound) {
+			unbindService(_connection);
+			_bound = false;
+		}
 	}
 
 	// if the service was connected successfully, the service connection gives us access to the service
@@ -195,6 +205,12 @@ public class MainActivityService extends Activity implements IntervalScanListene
 
 	private void startScan(BleDeviceFilter filter) {
 		if (_bound) {
+			if (Config.ENCRYPTION_ENABLED) {
+				EncryptionKeys keys = new EncryptionKeys(Config.ADMIN_KEY, Config.MEMBER_KEY, Config.GUEST_KEY);
+				_service.getBleExt().getBleBase().setEncryptionKeys(keys);
+				_service.getBleExt().getBleBase().enableEncryption(true);
+			}
+
 			_btnScan.setText(getString(R.string.main_stop_scan));
 			// start scanning for devices, only return devices defined by the filter
 			_service.clearDeviceMap();
