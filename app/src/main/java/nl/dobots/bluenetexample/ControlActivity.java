@@ -306,14 +306,14 @@ public class ControlActivity extends AppCompatActivity {
 	private void togglePower() {
 		// toggle the device switch, without needing to know the current state. this function will
 		// check first if the device is connected (and connect if it is not), then it reads the
-		// current PWM state, and depending on the state, decides if it needs to switch it on or
+		// current relay state, and depending on the state, decides if it needs to switch it on or
 		// off. in the end it disconnects again (once the disconnect timeout expires)
-		_ble.toggleRelay(_address, new IStatusCallback() {
+		_ble.toggleRelay(_address, new IBooleanCallback() {
 			@Override
-			public void onSuccess() {
+			public void onSuccess(boolean value) {
 				Log.i(TAG, "toggle success");
 				// power was toggled successfully, update the light bulb
-				updateLightBulb(!_lightOn);
+				updateLightBulb(value);
 			}
 
 			@Override
