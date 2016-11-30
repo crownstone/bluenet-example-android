@@ -123,6 +123,12 @@ public class MainActivityService extends Activity implements IntervalScanListene
 			// set the scan pause (how many ms should the service wait before starting the next scan)
 			_service.setScanPause(LOW_SCAN_PAUSE);
 
+			if (Config.ENCRYPTION_ENABLED) {
+				EncryptionKeys keys = new EncryptionKeys(Config.ADMIN_KEY, Config.MEMBER_KEY, Config.GUEST_KEY);
+				_service.getBleExt().getBleBase().setEncryptionKeys(keys);
+				_service.getBleExt().getBleBase().enableEncryption(true);
+			}
+
 			_bound = true;
 		}
 
@@ -205,12 +211,6 @@ public class MainActivityService extends Activity implements IntervalScanListene
 
 	private void startScan(BleDeviceFilter filter) {
 		if (_bound) {
-			if (Config.ENCRYPTION_ENABLED) {
-				EncryptionKeys keys = new EncryptionKeys(Config.ADMIN_KEY, Config.MEMBER_KEY, Config.GUEST_KEY);
-				_service.getBleExt().getBleBase().setEncryptionKeys(keys);
-				_service.getBleExt().getBleBase().enableEncryption(true);
-			}
-
 			_btnScan.setText(getString(R.string.main_stop_scan));
 			// start scanning for devices, only return devices defined by the filter
 			_service.clearDeviceMap();
