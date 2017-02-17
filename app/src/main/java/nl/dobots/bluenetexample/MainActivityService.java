@@ -2,6 +2,7 @@ package nl.dobots.bluenetexample;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -18,6 +19,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
 import nl.dobots.bluenet.ble.base.structs.EncryptionKeys;
@@ -195,6 +197,59 @@ public class MainActivityService extends Activity implements IntervalScanListene
 				Intent intent = new Intent(MainActivityService.this, ControlActivity.class);
 				intent.putExtra("address", _address);
 				startActivity(intent);
+			}
+		});
+		_lvScanList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+			@Override
+			public boolean onItemLongClick(final AdapterView<?> parent, final View view, final int position, long id) {
+
+				final BleDevice device = _bleDeviceList.get(position);
+				if (device.isStone()) {
+
+					final AlertDialog.Builder builder = new AlertDialog.Builder(parent.getContext());
+					builder.setTitle("Recover Stone");
+					builder.setMessage("Do you want to recover the stone " + device.getName() + "?");
+					builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							final ProgressDialog dlg = ProgressDialog.show(MainActivityService.this, "Recovering Stone " + device.getName(), "Please wait ...", true);
+							_service.getBleExt().recover(device.getAddress(), new IStatusCallback() {
+								@Override
+								public void onSuccess() {
+									dlg.dismiss();
+
+									runOnUiThread(new Runnable() {
+										@Override
+										public void run() {
+											Toast.makeText(MainActivityService.this, "Stone successfully recovered", Toast.LENGTH_LONG).show();
+										}
+									});
+								}
+
+								@Override
+								public void onError(final int error) {
+									dlg.dismiss();
+
+									runOnUiThread(new Runnable() {
+										@Override
+										public void run() {
+											Toast.makeText(MainActivityService.this, "failed with error: " + error, Toast.LENGTH_LONG).show();
+										}
+									});
+								}
+							});
+						}
+					});
+					builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+						public void onClick(DialogInterface dialog, int id) {
+							/* nothing to do */
+						}
+					});
+					builder.show();
+
+					return true;
+				} else {
+					return false;
+				}
 			}
 		});
 

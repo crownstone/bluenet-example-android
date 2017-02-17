@@ -1,21 +1,32 @@
 package nl.dobots.bluenetexample;
 
 import android.app.ProgressDialog;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import org.json.JSONObject;
 
 import nl.dobots.bluenet.ble.base.callbacks.IBooleanCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IDiscoveryCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IIntegerCallback;
+import nl.dobots.bluenet.ble.base.callbacks.IProgressCallback;
 import nl.dobots.bluenet.ble.base.callbacks.IStatusCallback;
 import nl.dobots.bluenet.ble.base.structs.EncryptionKeys;
 import nl.dobots.bluenet.ble.cfg.BleErrors;
+import nl.dobots.bluenet.ble.cfg.BleTypes;
+import nl.dobots.bluenet.ble.cfg.BluenetConfig;
 import nl.dobots.bluenet.ble.extended.BleExt;
+import nl.dobots.bluenet.ble.extended.CrownstoneSetup;
+import nl.dobots.bluenet.utils.BleLog;
 
 /**
  * This example activity shows the use of the bluenet library. The library is first initialized,
@@ -222,7 +233,7 @@ public class ControlActivity extends AppCompatActivity {
 		// finish has to be called on the library to release the objects if the library
 		// is not used anymore
 		if (_ble.isConnected(null)) {
-			_ble.disconnectAndClose(false, new IStatusCallback() {
+			_ble.disconnectAndClose(true, new IStatusCallback() {
 				@Override
 				public void onSuccess() {
 
@@ -263,6 +274,129 @@ public class ControlActivity extends AppCompatActivity {
 				powerOff();
 			}
 		});
+
+		Button btnSetup = (Button) findViewById(R.id.btnSetup);
+		btnSetup.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				executeSetup();
+			}
+		});
+
+		Button btnReset = (Button) findViewById(R.id.btnReset);
+		btnReset.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				factoryReset();
+			}
+		});
+	}
+
+	private void factoryReset() {
+		final ProgressDialog dlg = ProgressDialog.show(this, "Executing Factory Reset", "Please wait...", true);
+		_ble.writeFactoryReset(_address, new IStatusCallback() {
+			@Override
+			public void onSuccess() {
+				Log.d(TAG, "successfully reset to factory settings");
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Toast.makeText(ControlActivity.this, "success", Toast.LENGTH_LONG).show();
+					}
+				});
+				dlg.dismiss();
+			}
+
+			@Override
+			public void onError(final int error) {
+				Log.e(TAG, "failed to reset to factory");
+
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						Toast.makeText(ControlActivity.this, "failed with error: " + error, Toast.LENGTH_LONG).show();
+					}
+				});
+				dlg.dismiss();
+			}
+		});
+	}
+
+	private void executeSetup() {
+		final ProgressDialog dlg = new ProgressDialog(this);
+		dlg.setTitle("Executing Setup");
+		dlg.setMessage("Please wait ...");
+		dlg.setIndeterminate(false);
+		dlg.setMax(13);
+		dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		dlg.show();
+
+		CrownstoneSetup setup = new CrownstoneSetup(_ble);
+		_ble.enableEncryption(true);
+		setup.executeSetup(_address,
+			1,
+			Config.ADMIN_KEY,
+			Config.MEMBER_KEY,
+			Config.GUEST_KEY,
+			0x9449d07c,
+			"b1a64158-ada0-4cc1-b508-eab42c82cd81",
+			123,
+			456,
+			new IProgressCallback() {
+
+				@Override
+				public void onError(final int error) {
+					BleLog.getInstance().LOGe(TAG, "failed with error: %d", error);
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(ControlActivity.this, "failed with error: " + error, Toast.LENGTH_LONG).show();
+						}
+					});
+				}
+
+				@Override
+				public void onProgress(final double progress, @Nullable JSONObject statusJson) {
+					BleLog.getInstance().LOGi(TAG, "progress: %f", progress);
+
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							dlg.setProgress((int) progress);
+						}
+					});
+				}
+			}, new IStatusCallback() {
+
+				@Override
+				public void onError(final int error) {
+					BleLog.getInstance().LOGe(TAG, "status error: %d", error);
+
+					dlg.dismiss();
+
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(ControlActivity.this, "status error: " + error, Toast.LENGTH_LONG).show();
+						}
+					});
+				}
+
+				@Override
+				public void onSuccess() {
+					BleLog.getInstance().LOGd(TAG, "success");
+
+					dlg.dismiss();
+
+					runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							Toast.makeText(ControlActivity.this, "success", Toast.LENGTH_LONG).show();
+						}
+					});
+				}
+			}
+		);
 	}
 
 	private void powerOff() {

@@ -33,13 +33,39 @@
 			/>
 	</LinearLayout>
 
+	<LinearLayout
+		android:id="@+id/layAny"
+		android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_above="@id/layPower"
+		>
+
+		<Button
+			android:id="@+id/btnSetup"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			android:layout_height="wrap_content"
+			android:text="Setup"
+			android:layout_gravity="center_vertical"/>
+
+		<Button
+			android:id="@+id/btnReset"
+			android:layout_width="0dp"
+			android:layout_weight="1"
+			android:layout_height="wrap_content"
+			android:text="Reset"
+			android:layout_gravity="center_vertical"/>
+
+	</LinearLayout>
+
 	<ImageView
 		android:id="@+id/imgLightBulb"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:layout_centerHorizontal="true"
 		android:layout_alignParentTop="true"
-		android:layout_above="@+id/layPower"
+		android:layout_above="@+id/layAny"
 		android:src="@drawable/light_bulb_off"
 		/>
 
